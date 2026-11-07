@@ -12,7 +12,7 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Supabase: `orgs`, `org_members`, role `admin`/`demo`, RLS, testy pgTAP: #2
 - [x] Pipeline Python: uv, walidowana konfiguracja generatora: #3
 - [x] CI: web, baza, pipeline
-- [x] Workflow: hooki (lint po edycji, blokada commitów na `main`), ten plan
+- [x] Workflow: hooki (lint po edycji, blokada commitów na `main`), ochrona `main` na GitHubie, ten plan
 - [ ] Wczesny deploy: projekt Supabase w chmurze + Vercel, zmienne środowiskowe, migracje na produkcji
 
 ## Etap 2: Model danych i generator ⏳

@@ -80,4 +80,4 @@ Generator parameters live in `pipeline/config/generator.toml` and are validated 
 
 `.claude/settings.json` runs two hooks for Claude Code sessions in this repo:
 - after every Edit/Write, `.claude/hooks/lint-edited-file.sh` lints the changed file (ESLint for TS/JS, ruff for `pipeline/`); fix reported errors before moving on;
-- before Bash, `.claude/hooks/guard-main.sh` blocks `git commit` on `main` and pushes to `main`. GitHub branch protection is unavailable for this private repo on the free plan, so this hook enforces the branch rule.
+- before Bash, `.claude/hooks/guard-main.sh` blocks `git commit` on `main` and pushes to `main`, so the agent finds out before GitHub rejects it. On GitHub, `main` is protected: the Web, Database and Pipeline checks must pass, linear history, no force pushes.

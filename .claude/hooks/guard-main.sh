@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse hook (Bash): block commits and pushes to main.
-# GitHub branch protection is not available on this private repo (free plan),
-# so the CLAUDE.md rule "never commit directly to main" is enforced here.
+# Complements GitHub branch protection: catches the mistake locally, before a
+# commit lands on main and has to be moved to a branch.
 set -uo pipefail
 
 cmd=$(jq -r '.tool_input.command // empty')
