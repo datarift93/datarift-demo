@@ -76,6 +76,13 @@ uv run ruff check . && uv run ruff format --check .
 
 Generator parameters live in `pipeline/config/generator.toml` and are validated by `GeneratorConfig` (pydantic). Generation must stay deterministic: same config + seed = same data.
 
+## Environments
+
+- **Production web**: https://datarift-demo.vercel.app (Vercel project `datarift-demo`; deploys from `main`).
+- **Production DB**: Supabase project `omxybotjtzmyrankpfio` (eu-central-1), linked with `supabase link`.
+  - Migrations: `supabase db push --remote --dry-run` first, then `supabase db push --remote`. `seed.sql` is local only; never push it.
+  - Do **not** run `supabase config push`: `config.toml` holds local dev auth settings (no email confirmation, no MFA, localhost URLs). Change production auth settings in the dashboard.
+
 ## Agent hooks
 
 `.claude/settings.json` runs two hooks for Claude Code sessions in this repo:
