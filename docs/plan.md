@@ -15,9 +15,11 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Workflow: hooki (lint po edycji, blokada commitów na `main`), ochrona `main` na GitHubie, ten plan
 - [x] Wczesny deploy: Vercel (https://datarift-demo.vercel.app), Supabase we Frankfurcie, migracje na produkcji, RLS sprawdzone
 
-## Etap 2: Model danych i generator ⏳
+## Etap 2: Model danych i generator 🔄
 
-Najpierw **kontrakt danych** (tabele, kolumny, typy, klucze) w `docs/data-model.md`. Potem dwie niezależne ścieżki:
+- [x] Kontrakt danych: [data-model.md](data-model.md)
+
+Potem niezależne ścieżki:
 
 - ⫽ **Schemat bazy**: migracje wymiarów (sklep, region, kanał, produkt, kategoria, klient, data) i faktów (sprzedaż, zakupy, budżet), tabela kursów NBP, `org_id` + RLS + testy, indeksy pod filtry
 - ⫽ **Generator**: deterministyczny (seed), realizm z sekcji 2.2 (sezonowość, promocje, Black Friday, słabe i spadające sklepy, churn, regiony, Pareto), budżet sklep × miesiąc; testy, że wzorce są w danych

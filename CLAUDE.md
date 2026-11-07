@@ -5,6 +5,7 @@
 datarift-demo is a portfolio BI app for prospective data/analytics clients. It analyzes two years of sales for "Wisła", a fictional Polish retail chain (~25 stores across voivodeships + an online store), with data from a Python generator and real EUR/PLN rates from the NBP API.
 
 Full requirements (Polish): [docs/requirements.md](docs/requirements.md). Read it before working on any feature.
+Data contract (CSV files, DB model, planted signals): [docs/data-model.md](docs/data-model.md). Generator and schema must both follow it; change the contract in a PR first.
 Stage plan and progress: [docs/plan.md](docs/plan.md). Check it to see where the project is; tick items in the PR that completes them.
 
 ## Stack
