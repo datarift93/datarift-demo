@@ -1,0 +1,32 @@
+{
+    "table": "A",
+    "currency": "euro",
+    "code": "EUR",
+    "rates": [
+        {
+            "no": "249/A/NBP/2025",
+            "effectiveDate": "2025-12-29",
+            "mid": 4.2274
+        },
+        {
+            "no": "250/A/NBP/2025",
+            "effectiveDate": "2025-12-30",
+            "mid": 4.2293
+        },
+        {
+            "no": "251/A/NBP/2025",
+            "effectiveDate": "2025-12-31",
+            "mid": 4.2267
+        },
+        {
+            "no": "001/A/NBP/2026",
+            "effectiveDate": "2026-01-02",
+            "mid": 4.2156
+        },
+        {
+            "no": "002/A/NBP/2026",
+            "effectiveDate": "2026-01-05",
+            "mid": 4.211
+        }
+    ]
+}
