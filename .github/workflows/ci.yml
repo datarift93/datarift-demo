@@ -25,3 +25,14 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+
+  database:
+    name: Database (migrations, seed, RLS tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.0.0
+      - run: supabase db start
+      - run: supabase test db

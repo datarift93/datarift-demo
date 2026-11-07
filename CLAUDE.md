@@ -30,7 +30,7 @@ docs/             Requirements and project docs
 - **Schema changes only through Supabase migrations** (`supabase/migrations/`). Never edit the schema by hand in the dashboard.
 - **RLS enabled on every table**, with policies scoped by `org_id`. The `demo` role is read-only, enforced in the database and not only in the UI.
 - **Aggregations in the database** (views / materialized views), not in the client.
-- **No secrets in code.** Use `.env` / `.env.local` only (gitignored, never committed); keep `.env.example` up to date. The `service_role` key never reaches the browser.
+- **No secrets in code.** Use `.env` / `.env.local` only (gitignored, never committed); keep `.env.example` up to date. The Supabase secret key (`SUPABASE_SECRET_KEY`, formerly `service_role`) never reaches the browser.
 - **Plan first**: before implementing, write a short plan and get it approved.
 - **Small steps**: one focused change at a time, each with a test.
 - **Branches + PRs**: never commit directly to `main`.
@@ -52,7 +52,18 @@ Before finishing a change, run `pnpm lint && pnpm typecheck && pnpm test`. CI ru
 
 UI: shadcn/ui (Base UI primitives, `components/ui/`), Tailwind v4. Polish number/date formatting lives in `lib/format.ts`; always use it instead of ad-hoc `toLocaleString`. Next.js here is v16: check `node_modules/next/dist/docs/` before using an API (see `AGENTS.md`).
 
+Database (local Supabase, needs Docker running):
+
 ```bash
-# TODO: Supabase local + migrations
+supabase start                          # local stack; prints URLs and keys (copy to .env.local, see .env.example)
+supabase db reset                       # re-apply all migrations + supabase/seed.sql
+supabase migration new <name>           # new migration in supabase/migrations/
+supabase test db                        # pgTAP tests in supabase/tests/database/
+supabase stop
+```
+
+Every new table: `org_id` column, `enable row level security`, read policy with `private.is_org_member(org_id)`, write policies with `private.is_org_admin(org_id)`, and a pgTAP test (demo can read, cannot write, cannot see other orgs). `001_rls.test.sql` fails if any table in `public` has RLS off. Local demo login: `demo@datarift.local` (seed only).
+
+```bash
 # TODO: Python pipeline: generate data, fetch NBP rates, run import
 ```
