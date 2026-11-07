@@ -4,9 +4,13 @@
 # commit lands on main and has to be moved to a branch.
 set -uo pipefail
 
-cmd=$(jq -r '.tool_input.command // empty')
-root="${CLAUDE_PROJECT_DIR:-.}"
-branch=$(git -C "$root" branch --show-current 2>/dev/null)
+input=$(cat)
+cmd=$(jq -r '.tool_input.command // empty' <<<"$input")
+# Check the branch where the command runs: the session's cwd (its own worktree
+# for parallel sessions), not CLAUDE_PROJECT_DIR, which is the main checkout.
+dir=$(jq -r '.cwd // empty' <<<"$input")
+dir="${dir:-${CLAUDE_PROJECT_DIR:-.}}"
+branch=$(git -C "$dir" branch --show-current 2>/dev/null)
 
 if [[ "$cmd" =~ (^|[;&|[:space:]])git[[:space:]]+(-C[[:space:]]+[^[:space:]]+[[:space:]]+)?commit ]] && [[ "$branch" == "main" ]]; then
   echo "Blocked: committing on main. Create a branch first (CLAUDE.md: never commit directly to main)." >&2
