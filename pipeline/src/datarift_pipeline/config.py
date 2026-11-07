@@ -2,7 +2,7 @@
 
 import os
 import tomllib
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Self
 
@@ -17,6 +17,7 @@ DEFAULT_CONFIG_PATH = Path("config/generator.toml")
 # roughly 300-600k order lines at scale 1.0).
 MAX_CUSTOMERS = 200_000
 MAX_SCALE = 3.0
+MAX_PRODUCTS = 2000
 
 
 class GeneratorConfig(BaseModel):
@@ -29,6 +30,15 @@ class GeneratorConfig(BaseModel):
     online_store: bool = True
     customer_count: int = Field(ge=1, le=MAX_CUSTOMERS)
     scale: float = Field(gt=0, le=MAX_SCALE)
+    product_count: int = Field(default=400, ge=50, le=MAX_PRODUCTS)
+    # Share of deliberately broken rows (orders + order lines) for the import error list (F4).
+    dirty_row_rate: float = Field(default=0.002, ge=0, le=0.05)
+    # Planted store signals: permanently weak stores and stores with a sudden drop.
+    weak_store_count: int = Field(default=3, ge=0)
+    declining_store_count: int = Field(default=2, ge=0)
+    # Purchases (and NBP rates) start this many days before start_date, so every sale has
+    # purchase costs from the 90 days before it.
+    purchase_lookback_days: int = Field(default=120, ge=90, le=365)
 
     @model_validator(mode="after")
     def check_date_range(self) -> Self:
@@ -37,12 +47,19 @@ class GeneratorConfig(BaseModel):
         # Year-over-year comparisons (anomalies, cohorts) need at least one full year.
         if self.days < 365:
             raise ValueError("date range must cover at least one full year")
+        if self.weak_store_count + self.declining_store_count > self.store_count:
+            raise ValueError("weak_store_count + declining_store_count exceeds store_count")
         return self
 
     @property
     def days(self) -> int:
         """Number of days in the range, both ends included."""
         return (self.end_date - self.start_date).days + 1
+
+    @property
+    def purchases_start(self) -> date:
+        """First day with purchases (and the first NBP rate needed)."""
+        return self.start_date - timedelta(days=self.purchase_lookback_days)
 
 
 def default_config_path() -> Path:

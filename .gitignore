@@ -50,3 +50,6 @@ __pycache__/
 
 # Claude Code worktrees for parallel sessions
 /.claude/worktrees/
+
+# generated pipeline data (regenerate with: cd pipeline && uv run datarift-pipeline generate)
+/pipeline/out/

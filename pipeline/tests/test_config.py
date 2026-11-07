@@ -52,6 +52,11 @@ def test_config_path_from_env(monkeypatch, tmp_path: Path):
         ("scale", 0),
         ("scale", 3.5),
         ("seed", -1),
+        ("product_count", 10),
+        ("dirty_row_rate", -0.01),
+        ("dirty_row_rate", 0.1),
+        ("weak_store_count", -1),
+        ("purchase_lookback_days", 30),
     ],
 )
 def test_rejects_out_of_range_values(field, value):

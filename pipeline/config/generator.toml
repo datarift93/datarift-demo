@@ -10,3 +10,17 @@ customer_count = 20000
 
 # Multiplier for order volume. Lower it to stay under the Supabase free-tier size limit (~500 MB).
 scale = 1.0
+
+# Assortment size (products.csv).
+product_count = 400
+
+# Share of deliberately broken rows in orders + order_lines (unknown SKU, quantity 0,
+# negative price, duplicate, date out of range). Every one is listed in _truth.json.
+dirty_row_rate = 0.002
+
+# Planted store signals (docs/data-model.md section 4).
+weak_store_count = 3
+declining_store_count = 2
+
+# Purchases and NBP rates start this many days before start_date.
+purchase_lookback_days = 120
