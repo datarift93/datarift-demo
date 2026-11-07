@@ -61,6 +61,7 @@ supabase start                          # local stack; prints URLs and keys (cop
 supabase db reset                       # re-apply all migrations + supabase/seed.sql
 supabase migration new <name>           # new migration in supabase/migrations/
 supabase test db                        # pgTAP tests in supabase/tests/database/
+scripts/check_calendar_parity.sh        # DB calendar == pipeline/calendar_pl.py (also in CI)
 supabase stop
 ```
 
@@ -71,6 +72,8 @@ Python pipeline (run from `pipeline/`, uses uv, Python 3.12):
 ```bash
 uv sync                                         # install deps into pipeline/.venv
 uv run datarift-pipeline config                 # validate and print config/generator.toml
+uv run datarift-pipeline generate               # full dataset -> pipeline/out/ (CSV + _truth.json), ~2 s
+uv run datarift-pipeline fetch-rates            # refresh data/fx_eur_pln.csv from the NBP API (committed)
 uv run pytest                                   # tests in pipeline/tests/
 uv run ruff check . && uv run ruff format --check .
 ```
