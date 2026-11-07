@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(18);
 
 -- Guard for every future table: RLS must be on everywhere in public.
 select is_empty(
@@ -117,7 +117,43 @@ select is(
   false,
   'is_org_admin is false for another org'
 );
+
+-- Orgs and memberships are managed with service_role only, even admins cannot write them.
+select throws_ok(
+  $$ insert into public.orgs (slug, name) values ('admin-org', 'Admin Org') $$,
+  '42501', null,
+  'admin cannot create orgs through the API'
+);
+
+select throws_ok(
+  $$ insert into public.org_members (org_id, user_id, role)
+     values ('10000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-0000000000a1', 'admin') $$,
+  '42501', null,
+  'admin cannot join another org'
+);
+
+update public.org_members set role = 'admin'
+  where user_id = '20000000-0000-0000-0000-0000000000a2';
+delete from public.org_members
+  where org_id = '10000000-0000-0000-0000-00000000000a';
 reset role;
+
+select results_eq(
+  $$ select user_id::text, role::text from public.org_members
+     where org_id = '10000000-0000-0000-0000-00000000000a' order by user_id $$,
+  $$ values ('20000000-0000-0000-0000-0000000000a1', 'admin'),
+            ('20000000-0000-0000-0000-0000000000a2', 'demo') $$,
+  'admin cannot change roles or remove members through the API'
+);
+
+-- Default privileges: a table created by a future migration gets no anon grants.
+create table public.future_table (id int);
+select is(
+  has_table_privilege('anon', 'public.future_table', 'select'),
+  false,
+  'new tables in public are not granted to anon by default'
+);
+drop table public.future_table;
 
 -- user without any membership -----------------------------------------------
 insert into auth.users (id, email) values ('20000000-0000-0000-0000-0000000000c1', 'nobody@test.local');

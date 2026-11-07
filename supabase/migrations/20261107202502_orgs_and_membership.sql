@@ -71,9 +71,13 @@ grant execute on function private.is_org_admin(uuid) to authenticated;
 alter table public.orgs enable row level security;
 alter table public.org_members enable row level security;
 
--- Anonymous visitors never read these tables directly.
-revoke all on public.orgs from anon;
-revoke all on public.org_members from anon;
+-- Anonymous visitors never read app tables directly. Revoke on existing tables and,
+-- through default privileges, on every table/sequence created later in public, so
+-- no future migration has to remember it.
+revoke all on all tables in schema public from anon;
+revoke all on all sequences in schema public from anon;
+alter default privileges for role postgres in schema public revoke all on tables from anon;
+alter default privileges for role postgres in schema public revoke all on sequences from anon;
 
 create policy "members read their orgs"
   on public.orgs for select
