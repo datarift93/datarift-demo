@@ -16,7 +16,7 @@ uv run ruff check . && uv run ruff format --check .
 `generate` reads `config/generator.toml` and the committed NBP rates (`data/fx_eur_pln.csv`), never
 the API, so the same seed gives byte-identical files. The files follow `docs/data-model.md`;
 `out/_truth.json` lists the planted signals (weak and declining stores, margin drop, Black Friday,
-churn cohorts...) and every deliberately broken row (`row_no` 1 = first data row after the header).
+churn cohorts...) and every deliberately broken row (`row_no` 1 = first data row after the header). All money amounts are net (excluding VAT).
 
 Modules: `calendar_pl.py` (holidays, trading Sundays, Black Friday), `reference.py` (voivodeships
 with TERYT codes, cities, categories, product names), `generator.py` (the generator), `nbp.py`

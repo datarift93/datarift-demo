@@ -55,7 +55,12 @@ def trading_sundays(year: int) -> list[date]:
     """
     sundays = {_last_weekday(year, m, 6) for m in (1, 4, 6, 8)}
     sundays.add(easter_sunday(year) - timedelta(days=7))
-    before_christmas = [date(year, 12, d) for d in range(1, 24) if date(year, 12, d).weekday() == 6]
+    # Until 2024 the two Sundays directly before Christmas, which can be 24 December itself.
+    # From 2025 Christmas Eve is a holiday, so the three Sundays before it.
+    last_day = 23 if year >= 2025 else 24
+    before_christmas = [
+        date(year, 12, d) for d in range(1, last_day + 1) if date(year, 12, d).weekday() == 6
+    ]
     sundays.update(before_christmas[-(3 if year >= 2025 else 2) :])
     return sorted(sundays)
 

@@ -6,6 +6,8 @@ planted signal (section 4) and every deliberately broken row.
 Everything derives from `config.seed`: each part of the dataset draws from its own named
 random stream (`_rng`), so changing one part does not reshuffle the others.
 
+All money amounts (list_price, unit_price, unit_cost, revenue_plan) are net, excluding VAT.
+
 Volumes are scaled down to fit the Supabase free tier (a store has ~8 orders a day), so the
 signals are strong enough to see at weekly and monthly resolution, not daily.
 """

@@ -92,7 +92,7 @@ SIZE_RANGE = {1: (1800, 3200), 2: (1200, 2200), 3: (800, 1500)}
 class Category:
     code: str
     name: str
-    margin: float  # target gross margin on list price
+    margin: float  # target margin (price minus purchase cost) on the net list price
     eur_share: float  # share of products bought from foreign suppliers in EUR
     product_share: float  # share of the assortment
     # Monthly demand multipliers (Jan..Dec) on top of the chain-wide seasonality: they shift
