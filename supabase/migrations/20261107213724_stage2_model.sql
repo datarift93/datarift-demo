@@ -96,7 +96,9 @@ create table public.promotions (
   unique (org_id, id),
   foreign key (org_id, category_id) references public.categories (org_id, id),
   foreign key (org_id, product_id) references public.products (org_id, id),
-  check (starts_on <= ends_on)
+  check (starts_on <= ends_on),
+  -- A promotion targets one category, one product, or (both null) everything.
+  check (category_id is null or product_id is null)
 );
 
 -- Facts ---------------------------------------------------------------------
@@ -197,11 +199,78 @@ create table public.calendar (
   holiday_name         text,
   is_trading_sunday    boolean not null, -- Sunday on which shops may open (Sunday trading ban)
   is_store_trading_day boolean not null, -- physical stores open: not a holiday, not a non-trading Sunday
+  is_short_trading_day boolean not null, -- stores open but close around 14:00 (Holy Saturday, 24 Dec before 2025, 31 Dec)
   is_black_friday      boolean not null,
   is_cyber_monday      boolean not null,
   check (is_holiday = (holiday_name is not null)),
-  check (not is_trading_sunday or day_of_week = 7)
+  check (not is_trading_sunday or day_of_week = 7),
+  check (not is_short_trading_day or is_store_trading_day)
 );
+
+-- RLS helpers ---------------------------------------------------------------
+
+-- Set-based variants of private.is_org_member / private.is_org_admin. A policy like
+-- `org_id in (select private.user_org_ids())` runs the subquery once per statement
+-- (hashed), instead of calling a function for every row: aggregates over the fact
+-- tables would otherwise pay one function call per row.
+create function private.user_org_ids()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select m.org_id from public.org_members m where m.user_id = (select auth.uid());
+$$;
+
+create function private.admin_org_ids()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select m.org_id from public.org_members m
+  where m.user_id = (select auth.uid()) and m.role = 'admin';
+$$;
+
+revoke all on function private.user_org_ids() from public;
+revoke all on function private.admin_org_ids() from public;
+grant execute on function private.user_org_ids() to authenticated;
+grant execute on function private.admin_org_ids() to authenticated;
+
+-- Stage 1 policies, same rules, rewritten with the set-based helpers.
+drop policy "members read their orgs" on public.orgs;
+create policy "members read their orgs"
+  on public.orgs for select
+  to authenticated
+  using (id in (select private.user_org_ids()));
+
+drop policy "members read own membership, admins read org" on public.org_members;
+create policy "members read own membership, admins read org"
+  on public.org_members for select
+  to authenticated
+  using (
+    user_id = (select auth.uid())
+    or org_id in (select private.admin_org_ids())
+  );
+
+-- A row never moves between orgs, not even for an admin of both (RLS alone would
+-- allow it) or for service_role. Fires before RLS checks.
+create function private.prevent_org_id_change()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.org_id is distinct from old.org_id then
+    raise exception 'org_id cannot be changed (table %)', tg_table_name
+      using errcode = '23514';
+  end if;
+  return new;
+end $$;
+
+revoke all on function private.prevent_org_id_change() from public;
 
 -- RLS -----------------------------------------------------------------------
 
@@ -218,17 +287,21 @@ begin
 
     execute format(
       'create policy "members read own org" on public.%I for select to authenticated
-         using ((select private.is_org_member(org_id)))', t);
+         using (org_id in (select private.user_org_ids()))', t);
     execute format(
       'create policy "admins insert own org" on public.%I for insert to authenticated
-         with check ((select private.is_org_admin(org_id)))', t);
+         with check (org_id in (select private.admin_org_ids()))', t);
     execute format(
       'create policy "admins update own org" on public.%I for update to authenticated
-         using ((select private.is_org_admin(org_id)))
-         with check ((select private.is_org_admin(org_id)))', t);
+         using (org_id in (select private.admin_org_ids()))
+         with check (org_id in (select private.admin_org_ids()))', t);
     execute format(
       'create policy "admins delete own org" on public.%I for delete to authenticated
-         using ((select private.is_org_admin(org_id)))', t);
+         using (org_id in (select private.admin_org_ids()))', t);
+
+    execute format(
+      'create trigger prevent_org_id_change before update of org_id on public.%I
+         for each row execute function private.prevent_org_id_change()', t);
   end loop;
 end $$;
 

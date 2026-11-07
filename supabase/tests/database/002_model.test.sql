@@ -3,9 +3,9 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
--- 10 org-scoped tables x 13 checks + 1 cross-org check + 10 global-table checks
--- + 4 generated-column / foreign-key checks.
-select plan(145);
+-- 10 org-scoped tables x 14 checks + 1 cross-org check + 10 global-table checks
+-- + 5 generated-column / constraint checks.
+select plan(156);
 
 -- Fixtures -------------------------------------------------------------------
 -- Two orgs; admin + demo in org A, admin in org B. Each org-scoped table has one
@@ -18,12 +18,15 @@ insert into public.orgs (id, slug, name) values
 insert into auth.users (id, email) values
   ('20000000-0000-0000-0000-0000000000a1', 'admin-a@test.local'),
   ('20000000-0000-0000-0000-0000000000a2', 'demo-a@test.local'),
-  ('20000000-0000-0000-0000-0000000000b1', 'admin-b@test.local');
+  ('20000000-0000-0000-0000-0000000000b1', 'admin-b@test.local'),
+  ('20000000-0000-0000-0000-0000000000ab', 'admin-both@test.local');
 
 insert into public.org_members (org_id, user_id, role) values
   ('10000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-0000000000a1', 'admin'),
   ('10000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-0000000000a2', 'demo'),
-  ('10000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-0000000000b1', 'admin');
+  ('10000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-0000000000b1', 'admin'),
+  ('10000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-0000000000ab', 'admin'),
+  ('10000000-0000-0000-0000-00000000000b', '20000000-0000-0000-0000-0000000000ab', 'admin');
 
 create function pg_temp.seed_org(org uuid, rid bigint, sfx text) returns void language plpgsql as $$
 begin
@@ -125,7 +128,7 @@ begin
       format('admin cannot update another org in %s', c.tbl));
     return next throws_ok(
       format('update public.%I set org_id = %L where id = 1001', c.tbl, org_b),
-      '42501', null,
+      '23514', null,
       format('admin cannot move rows of %s to another org', c.tbl));
     return next is_empty(
       format('delete from public.%I where id = 2001 returning id', c.tbl),
@@ -137,7 +140,20 @@ begin
   end loop;
 end $$;
 
--- anon and TRUNCATE (2 checks per table).
+-- Admin of both orgs: RLS would allow the move, the trigger forbids it (1 check per table).
+create function pg_temp.two_org_admin_checks() returns setof text language plpgsql as $$
+declare
+  c record;
+begin
+  for c in select * from pg_temp.cases() loop
+    return next throws_ok(
+      format('update public.%I set org_id = %L where id = 1001', c.tbl, '10000000-0000-0000-0000-00000000000b'),
+      '23514', format('org_id cannot be changed (table %s)', c.tbl),
+      format('admin of both orgs cannot move rows of %s between orgs', c.tbl));
+  end loop;
+end $$;
+
+-- anon and TRUNCATE (1 check per table each).
 create function pg_temp.anon_checks() returns setof text language plpgsql as $$
 declare
   c record;
@@ -171,6 +187,10 @@ reset role;
 
 select pg_temp.login_as('20000000-0000-0000-0000-0000000000a1');
 select * from pg_temp.admin_checks();
+reset role;
+
+select pg_temp.login_as('20000000-0000-0000-0000-0000000000ab');
+select * from pg_temp.two_org_admin_checks();
 reset role;
 
 set local role anon;
@@ -253,6 +273,13 @@ select throws_ok(
      values ('10000000-0000-0000-0000-00000000000a', 2001, 3, 1001, 1, 1.00) $$,
   '23503', null,
   'composite foreign keys: an order line cannot point at another org''s order'
+);
+
+select throws_ok(
+  $$ insert into public.promotions (org_id, promo_code, name, starts_on, ends_on, category_id, product_id, discount_pct)
+     values ('10000000-0000-0000-0000-00000000000a', 'BOTH', 'Obie', '2025-01-01', '2025-01-31', 1001, 1001, 0.1) $$,
+  '23514', null,
+  'a promotion targets a category or a product, not both'
 );
 
 select * from finish();
