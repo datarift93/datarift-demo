@@ -1,6 +1,6 @@
 # datarift-demo: kontrakt danych
 
-Wersja: 1.0 (zaakceptowana), 2026-11-07
+Wersja: 1.1, 2026-11-07 (1.1: kwoty netto)
 
 Ten dokument jest **umową między generatorem (Python) a bazą (Supabase)**. Obie strony implementują dokładnie to, co tu opisano, i mogą powstawać równolegle. Zmiana kontraktu = PR zmieniający ten plik, zanim zmieni się kod.
 
@@ -24,7 +24,7 @@ config/generator.toml ─┴─> generator ──> pipeline/out/*.csv + _truth.j
 
 ## 2. Pliki CSV (wyjście generatora = wejście importu)
 
-Format wspólny: UTF-8 bez BOM, separator `,`, nagłówek w pierwszym wierszu, kropka dziesiętna, daty `YYYY-MM-DD`, znaczniki czasu ISO 8601 z czasem lokalnym Polski (`2025-11-28T14:05:00+01:00`), puste pole = `NULL`. Kwoty w PLN z 2 miejscami po przecinku.
+Format wspólny: UTF-8 bez BOM, separator `,`, nagłówek w pierwszym wierszu, kropka dziesiętna, daty `YYYY-MM-DD`, znaczniki czasu ISO 8601 z czasem lokalnym Polski (`2025-11-28T14:05:00+01:00`), puste pole = `NULL`. Kwoty w PLN z 2 miejscami po przecinku. **Wszystkie kwoty są netto (bez VAT)**: ceny, koszty zakupu i budżety. To standard w raportowaniu sprzedaży, a marża liczona od ceny brutto byłaby zawyżona.
 
 `org_id` **nie** występuje w plikach. Nadaje go import (organizacja docelowa jest parametrem importu). Klucze w plikach to **kody biznesowe** (`store_code`, `sku`…), nie identyfikatory z bazy.
 
@@ -58,7 +58,7 @@ Format wspólny: UTF-8 bez BOM, separator `,`, nagłówek w pierwszym wierszu, k
 | sku | text, PK | np. `HOME-0042` |
 | name | text | |
 | category_code | text → categories | |
-| list_price | decimal PLN | cena katalogowa brutto |
+| list_price | decimal PLN | cena katalogowa netto |
 | purchase_currency | `PLN` / `EUR` | ~30% produktów importowanych |
 
 ### customers.csv
