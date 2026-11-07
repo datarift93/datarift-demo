@@ -13,7 +13,7 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Pipeline Python: uv, walidowana konfiguracja generatora: #3
 - [x] CI: web, baza, pipeline
 - [x] Workflow: hooki (lint po edycji, blokada commitów na `main`), ochrona `main` na GitHubie, ten plan
-- [ ] Wczesny deploy: projekt Supabase w chmurze + Vercel, zmienne środowiskowe, migracje na produkcji
+- [x] Wczesny deploy: Vercel (https://datarift-demo.vercel.app), Supabase we Frankfurcie, migracje na produkcji, RLS sprawdzone
 
 ## Etap 2: Model danych i generator ⏳
 
@@ -35,6 +35,7 @@ Kryterium: wygenerowane dane mieszczą się w limicie darmowego Supabase.
 ## Etap 4: Logowanie i szkielet aplikacji ⏳
 
 - [ ] „Zobacz demo” loguje jednym kliknięciem na konto `demo`; logowanie admina e-mail + hasło
+- [ ] Produkcja: zmienne środowiskowe Supabase w Vercel, konto demo i organizacja na produkcji, Site URL w ustawieniach auth
 - [ ] Layout: nawigacja między widokami, wersja mobilna (od 360 px)
 - [ ] Filtry globalne (okres, kanał, region, kategoria) zapisane w URL
 - [ ] Wspólne komponenty: tabela z sortowaniem, pusty stan, ładowanie, błędy
