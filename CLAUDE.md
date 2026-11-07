@@ -64,6 +64,13 @@ supabase stop
 
 Every new table: `org_id` column, `enable row level security`, read policy with `private.is_org_member(org_id)`, write policies with `private.is_org_admin(org_id)`, and a pgTAP test (demo can read, cannot write, cannot see other orgs). `001_rls.test.sql` fails if any table in `public` has RLS off. Local demo login: `demo@datarift.local` (seed only).
 
+Python pipeline (run from `pipeline/`, uses uv, Python 3.12):
+
 ```bash
-# TODO: Python pipeline: generate data, fetch NBP rates, run import
+uv sync                                         # install deps into pipeline/.venv
+uv run datarift-pipeline config                 # validate and print config/generator.toml
+uv run pytest                                   # tests in pipeline/tests/
+uv run ruff check . && uv run ruff format --check .
 ```
+
+Generator parameters live in `pipeline/config/generator.toml` and are validated by `GeneratorConfig` (pydantic). Generation must stay deterministic: same config + seed = same data.

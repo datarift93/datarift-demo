@@ -1,0 +1,12 @@
+# Generator parameters. Same file + same seed = same data on every run.
+
+seed = 42
+start_date = 2024-01-01
+end_date = 2025-12-31
+
+store_count = 25
+online_store = true
+customer_count = 20000
+
+# Multiplier for order volume. Lower it to stay under the Supabase free-tier size limit (~500 MB).
+scale = 1.0
