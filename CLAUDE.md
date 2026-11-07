@@ -37,12 +37,22 @@ docs/             Requirements and project docs
 
 ## Commands
 
-> TODO: fill in during Stage 1 (Etap 1).
+Web app (run from the repo root):
 
 ```bash
-# TODO: install       (pnpm install)
-# TODO: dev server    (pnpm dev)
-# TODO: lint / typecheck / test
+pnpm install        # install dependencies
+pnpm dev            # dev server on http://localhost:3000
+pnpm lint           # ESLint
+pnpm typecheck      # next typegen + tsc --noEmit
+pnpm test           # Vitest unit tests (*.test.ts next to the code)
+pnpm build          # production build
+```
+
+Before finishing a change, run `pnpm lint && pnpm typecheck && pnpm test`. CI runs the same checks plus `pnpm build` on every PR.
+
+UI: shadcn/ui (Base UI primitives, `components/ui/`), Tailwind v4. Polish number/date formatting lives in `lib/format.ts`; always use it instead of ad-hoc `toLocaleString`. Next.js here is v16: check `node_modules/next/dist/docs/` before using an API (see `AGENTS.md`).
+
+```bash
 # TODO: Supabase local + migrations
 # TODO: Python pipeline: generate data, fetch NBP rates, run import
 ```
