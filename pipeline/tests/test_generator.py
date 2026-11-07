@@ -17,6 +17,7 @@ from metrics import (
     weekly_orders,
 )
 
+from datarift_pipeline.calendar_pl import public_holidays
 from datarift_pipeline.cli import main
 from datarift_pipeline.config import GeneratorConfig
 from datarift_pipeline.generator import generate
@@ -628,3 +629,10 @@ def test_online_share_and_basket(default_dataset: Dataset):
     assert 0.2 <= online <= 0.35
     revenue = order_revenue(ds)
     assert 100 < statistics.mean(revenue.values()) < 600
+
+
+def test_purchases_fall_on_business_days(default_dataset: Dataset):
+    holidays = {d for y in range(2023, 2026) for d in public_holidays(y)}
+    days = {date.fromisoformat(p["purchase_date"]) for p in default_dataset.rows["purchases.csv"]}
+    assert all(d.weekday() < 5 for d in days)
+    assert not days & holidays

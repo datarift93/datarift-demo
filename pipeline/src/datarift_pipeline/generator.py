@@ -697,6 +697,11 @@ def _purchases(config, cal, products, orders, lines, fx: RateTable, margin_drop)
         int
     )
     ref_rate = fx.mean_rate(config.purchases_start, config.end_date)
+    holidays = {
+        d
+        for y in range(config.purchases_start.year - 1, config.end_date.year + 1)
+        for d in calendar_pl.public_holidays(y)
+    }
     drop_cat, drop_from, drop_to = margin_drop
     drop_from_i, drop_to_i = (drop_from - cal.start).days, (drop_to - cal.start).days
 
@@ -707,9 +712,10 @@ def _purchases(config, cal, products, orders, lines, fx: RateTable, margin_drop)
             nxt = min(t + int(interval[p]), total_days)
             rel = t - lookback
             dt = cal.start + timedelta(days=rel)
-            # Suppliers deliver on business days: move weekends to the Friday before.
-            if dt.weekday() >= 5:
-                rel -= dt.weekday() - 4
+            # Suppliers deliver on business days: weekends and holidays move to the day before.
+            while dt.weekday() >= 5 or dt in holidays:
+                dt -= timedelta(days=1)
+                rel -= 1
             need = cum[p, nxt] - cum[p, t]
             qty = max(1, math.ceil(need * rng.uniform(1.0, 1.15)))
             cost = products.cost_pln[p] * (1 + COST_INFLATION * rel / 365.0)
