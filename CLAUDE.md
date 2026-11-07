@@ -52,7 +52,18 @@ Before finishing a change, run `pnpm lint && pnpm typecheck && pnpm test`. CI ru
 
 UI: shadcn/ui (Base UI primitives, `components/ui/`), Tailwind v4. Polish number/date formatting lives in `lib/format.ts`; always use it instead of ad-hoc `toLocaleString`. Next.js here is v16: check `node_modules/next/dist/docs/` before using an API (see `AGENTS.md`).
 
+Database (local Supabase, needs Docker running):
+
 ```bash
-# TODO: Supabase local + migrations
+supabase start                          # local stack; prints URLs and keys (copy to .env.local, see .env.example)
+supabase db reset                       # re-apply all migrations + supabase/seed.sql
+supabase migration new <name>           # new migration in supabase/migrations/
+supabase test db                        # pgTAP tests in supabase/tests/database/
+supabase stop
+```
+
+Every new table: `org_id` column, `enable row level security`, read policy with `private.is_org_member(org_id)`, write policies with `private.is_org_admin(org_id)`, and a pgTAP test (demo can read, cannot write, cannot see other orgs). `001_rls.test.sql` fails if any table in `public` has RLS off. Local demo login: `demo@datarift.local` (seed only).
+
+```bash
 # TODO: Python pipeline: generate data, fetch NBP rates, run import
 ```
