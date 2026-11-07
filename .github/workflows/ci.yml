@@ -36,6 +36,9 @@ jobs:
           version: 3.0.0
       - run: supabase db start
       - run: supabase test db
+      - uses: astral-sh/setup-uv@v6
+      - name: Calendar parity (DB vs generator)
+        run: scripts/check_calendar_parity.sh
 
   pipeline:
     name: Pipeline (ruff, pytest)
