@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(20);
 
 -- Guard for every future table: RLS must be on everywhere in public.
 select is_empty(
@@ -12,6 +12,21 @@ select is_empty(
      join pg_namespace n on n.oid = c.relnamespace
      where n.nspname = 'public' and c.relkind in ('r', 'p') and not c.relrowsecurity $$,
   'every table in public has RLS enabled'
+);
+
+-- Materialized views ignore RLS, and plain views run with their owner's rights unless
+-- security_invoker is set: neither may live in the schema the Data API exposes.
+-- Aggregates go to the `analytics` schema behind SECURITY DEFINER functions instead.
+select is_empty(
+  $$ select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'm' $$,
+  'no materialized views in public (they would bypass RLS)'
+);
+select is_empty(
+  $$ select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'v'
+       and not coalesce('security_invoker=true' = any (c.reloptions), false) $$,
+  'every view in public uses security_invoker (so RLS applies)'
 );
 
 -- Fixtures: two orgs, an admin and a demo user in org A, an admin in org B.

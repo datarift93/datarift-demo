@@ -48,6 +48,23 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Data viz tokens (validated with the dataviz skill's palette checks). */
+:root {
+  --viz-series-1: #2a78d6;
+  --viz-grid: #e1e0d9;
+  --viz-axis: #898781;
+  --viz-delta-good: #006300;
+  --viz-delta-bad: #d03b3b;
+}
+
+.dark {
+  --viz-series-1: #3987e5;
+  --viz-grid: #2c2c2a;
+  --viz-axis: #898781;
+  --viz-delta-good: #0ca30c;
+  --viz-delta-bad: #e66767;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

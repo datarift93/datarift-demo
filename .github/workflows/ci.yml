@@ -39,11 +39,11 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: Calendar parity (DB vs generator)
         run: scripts/check_calendar_parity.sh
-      - name: Full import of the generated dataset (staging, validation, model, idempotency)
+      - name: Full import + KPI acceptance (import vs _truth.json, KPI functions vs control SQL)
         working-directory: pipeline
         env:
           REQUIRE_DB: "1"
-        run: uv run pytest tests/test_import_db.py -v
+        run: uv run pytest tests/test_import_db.py tests/test_kpi_db.py -v
 
   pipeline:
     name: Pipeline (ruff, pytest)

@@ -9,7 +9,7 @@ select plan(156);
 
 -- Fixtures -------------------------------------------------------------------
 -- Two orgs; admin + demo in org A, admin in org B. Each org-scoped table has one
--- row per org with a fixed id: 1001 in org A, 2001 in org B (identity values in
+-- row per org with a fixed id: 900001001 in org A, 900002001 in org B (identity values in
 -- the tests stay far below that).
 insert into public.orgs (id, slug, name) values
   ('10000000-0000-0000-0000-00000000000a', 'org-a', 'Org A'),
@@ -52,14 +52,14 @@ begin
     overriding system value values (rid, org, rid, '2025-11-01', 150000.00);
 end $$;
 
-select pg_temp.seed_org('10000000-0000-0000-0000-00000000000a', 1001, 'A');
-select pg_temp.seed_org('10000000-0000-0000-0000-00000000000b', 2001, 'B');
+select pg_temp.seed_org('10000000-0000-0000-0000-00000000000a', 900001001, 'A');
+select pg_temp.seed_org('10000000-0000-0000-0000-00000000000b', 900002001, 'B');
 
 insert into public.fx_rates (rate_date, mid_rate, table_no)
-  values ('2025-11-03', 4.2500, '212/A/NBP/2025');
+  values ('1999-11-03', 4.2500, '212/A/NBP/1999'); -- outside real NBP data, so the test runs on a loaded database too
 
 -- Per table: a valid insert template. %1$L = org_id, %2$s = id of the referenced
--- fixture rows in that org (1001 or 2001).
+-- fixture rows in that org (900001001 or 900002001).
 create function pg_temp.cases() returns table (tbl text, insert_tpl text) language sql as $$
   values
     ('regions',     $q$insert into public.regions (org_id, region_code, name, purchasing_power_index) values (%1$L, '99', 'nowe', 1.000)$q$),
@@ -89,17 +89,17 @@ begin
   for c in select * from pg_temp.cases() loop
     return next results_eq(
       format('select id, org_id from public.%I', c.tbl),
-      format('values (1001::bigint, %L::uuid)', org_a),
+      format('values (900001001::bigint, %L::uuid)', org_a),
       format('demo reads only own org rows in %s', c.tbl));
     return next throws_ok(
-      format(c.insert_tpl, org_a, 1001),
+      format(c.insert_tpl, org_a, 900001001),
       '42501', null,
       format('demo cannot insert into %s', c.tbl));
     return next is_empty(
-      format('update public.%I set org_id = org_id where id = 1001 returning id', c.tbl),
+      format('update public.%I set org_id = org_id where id = 900001001 returning id', c.tbl),
       format('demo cannot update %s', c.tbl));
     return next is_empty(
-      format('delete from public.%I where id = 1001 returning id', c.tbl),
+      format('delete from public.%I where id = 900001001 returning id', c.tbl),
       format('demo cannot delete from %s', c.tbl));
   end loop;
 end $$;
@@ -113,28 +113,28 @@ declare
 begin
   for c in select * from pg_temp.cases() loop
     return next lives_ok(
-      format(c.insert_tpl, org_a, 1001),
+      format(c.insert_tpl, org_a, 900001001),
       format('admin inserts into own org in %s', c.tbl));
     return next throws_ok(
-      format(c.insert_tpl, org_b, 2001),
+      format(c.insert_tpl, org_b, 900002001),
       '42501', null,
       format('admin cannot insert into another org in %s', c.tbl));
     return next results_eq(
-      format('update public.%I set org_id = org_id where id = 1001 returning id', c.tbl),
-      $v$ values (1001::bigint) $v$,
+      format('update public.%I set org_id = org_id where id = 900001001 returning id', c.tbl),
+      $v$ values (900001001::bigint) $v$,
       format('admin updates own org rows in %s', c.tbl));
     return next is_empty(
-      format('update public.%I set org_id = org_id where id = 2001 returning id', c.tbl),
+      format('update public.%I set org_id = org_id where id = 900002001 returning id', c.tbl),
       format('admin cannot update another org in %s', c.tbl));
     return next throws_ok(
-      format('update public.%I set org_id = %L where id = 1001', c.tbl, org_b),
+      format('update public.%I set org_id = %L where id = 900001001', c.tbl, org_b),
       '23514', null,
       format('admin cannot move rows of %s to another org', c.tbl));
     return next is_empty(
-      format('delete from public.%I where id = 2001 returning id', c.tbl),
+      format('delete from public.%I where id = 900002001 returning id', c.tbl),
       format('admin cannot delete from another org in %s', c.tbl));
     return next results_eq(
-      format('delete from public.%I where org_id = %L and id <> 1001 returning org_id', c.tbl, org_a),
+      format('delete from public.%I where org_id = %L and id <> 900001001 returning org_id', c.tbl, org_a),
       format('values (%L::uuid)', org_a),
       format('admin deletes own org rows in %s', c.tbl));
   end loop;
@@ -147,7 +147,7 @@ declare
 begin
   for c in select * from pg_temp.cases() loop
     return next throws_ok(
-      format('update public.%I set org_id = %L where id = 1001', c.tbl, '10000000-0000-0000-0000-00000000000b'),
+      format('update public.%I set org_id = %L where id = 900001001', c.tbl, '10000000-0000-0000-0000-00000000000b'),
       '23514', format('org_id cannot be changed (table %s)', c.tbl),
       format('admin of both orgs cannot move rows of %s between orgs', c.tbl));
   end loop;
@@ -213,7 +213,7 @@ select results_eq(
 -- Global reference tables ----------------------------------------------------
 
 select pg_temp.login_as('20000000-0000-0000-0000-0000000000a2');
-select results_eq($$ select mid_rate from public.fx_rates $$, $$ values (4.2500::numeric) $$,
+select results_eq($$ select mid_rate from public.fx_rates where rate_date = '1999-11-03' $$, $$ values (4.2500::numeric) $$,
   'authenticated reads fx_rates');
 select isnt_empty($$ select * from public.calendar $$, 'authenticated reads calendar');
 reset role;
@@ -246,38 +246,38 @@ select is(
 -- Generated columns ----------------------------------------------------------
 
 select results_eq(
-  $$ select line_revenue, line_margin from public.order_lines where id = 1001 $$,
+  $$ select line_revenue, line_margin from public.order_lines where id = 900001001 $$,
   $$ values (30.00::numeric, 10.50::numeric) $$,
   'line_revenue = quantity * unit_price, line_margin = quantity * (unit_price - unit_cost_pln)'
 );
 
 insert into public.order_lines (org_id, order_id, line_no, product_id, quantity, unit_price)
-  values ('10000000-0000-0000-0000-00000000000a', 1001, 2, 1001, 2, 19.99);
+  values ('10000000-0000-0000-0000-00000000000a', 900001001, 2, 900001001, 2, 19.99);
 
 select results_eq(
-  $$ select line_revenue, line_margin from public.order_lines where order_id = 1001 and line_no = 2 $$,
+  $$ select line_revenue, line_margin from public.order_lines where order_id = 900001001 and line_no = 2 $$,
   $$ values (39.98::numeric, null::numeric) $$,
   'line_margin is null until the import sets unit_cost_pln'
 );
 
-update public.order_lines set unit_cost_pln = 12.49 where order_id = 1001 and line_no = 2;
+update public.order_lines set unit_cost_pln = 12.49 where order_id = 900001001 and line_no = 2;
 
 select results_eq(
-  $$ select line_margin from public.order_lines where order_id = 1001 and line_no = 2 $$,
+  $$ select line_margin from public.order_lines where order_id = 900001001 and line_no = 2 $$,
   $$ values (15.00::numeric) $$,
   'line_margin recomputes when the import fills unit_cost_pln'
 );
 
 select throws_ok(
   $$ insert into public.order_lines (org_id, order_id, line_no, product_id, quantity, unit_price)
-     values ('10000000-0000-0000-0000-00000000000a', 2001, 3, 1001, 1, 1.00) $$,
+     values ('10000000-0000-0000-0000-00000000000a', 900002001, 3, 900001001, 1, 1.00) $$,
   '23503', null,
   'composite foreign keys: an order line cannot point at another org''s order'
 );
 
 select throws_ok(
   $$ insert into public.promotions (org_id, promo_code, name, starts_on, ends_on, category_id, product_id, discount_pct)
-     values ('10000000-0000-0000-0000-00000000000a', 'BOTH', 'Obie', '2025-01-01', '2025-01-31', 1001, 1001, 0.1) $$,
+     values ('10000000-0000-0000-0000-00000000000a', 'BOTH', 'Obie', '2025-01-01', '2025-01-31', 900001001, 900001001, 0.1) $$,
   '23514', null,
   'a promotion targets a category or a product, not both'
 );

@@ -25,9 +25,23 @@ const dateFormatter = new Intl.DateTimeFormat("pl-PL", {
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** 1234567.89 -> "1 234 567,89 zł" */
-export function formatPLN(value: number): string {
-  return currencyFormatter.format(value);
+const wholeCurrencyFormatter = new Intl.NumberFormat("pl-PL", {
+  style: "currency",
+  currency: "PLN",
+  maximumFractionDigits: 0,
+  useGrouping: "always",
+});
+
+const compactFormatter = new Intl.NumberFormat("pl-PL", { notation: "compact", maximumFractionDigits: 1 });
+
+/** 1234567.89 -> "1 234 567,89 zł"; with `{ whole: true }` -> "1 234 568 zł" (big headline values). */
+export function formatPLN(value: number, { whole = false }: { whole?: boolean } = {}): string {
+  return (whole ? wholeCurrencyFormatter : currencyFormatter).format(value);
+}
+
+/** Axis ticks: 1234567 -> "1,2 mln zł", 350000 -> "350 tys. zł". */
+export function formatPLNCompact(value: number): string {
+  return `${compactFormatter.format(value)} zł`;
 }
 
 /** 1234567 -> "1 234 567" */
