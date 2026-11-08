@@ -43,14 +43,14 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Produkcja: konto demo i admina (role nadane w bazie), zmienne środowiskowe w Vercel, Site URL i limit logowań w Supabase; demo sprawdzone na https://datarift-demo.vercel.app
 - [x] Funkcje Vercel we Frankfurcie (`fra1`, `vercel.json`), obok bazy (wcześniej `iad1`: każde zapytanie przez Atlantyk)
 
-## Etap 5: F1 Dashboard KPI 🔄
+## Etap 5: F1 Dashboard KPI ✅
 
 - [x] Widoki zmaterializowane (dzień × sklep, dzień × sklep × kategoria) w schemacie `analytics`, odświeżane `CONCURRENTLY` po imporcie; dostęp tylko przez funkcje sprawdzające członkostwo
 - [x] `kpi_summary` (okres + poprzedni okres tej samej długości) i `kpi_timeseries` (dzień/tydzień/miesiąc, puste okresy = 0)
 - [x] 4 kafelki KPI ze zmianą (strzałka, znak, kolor, nazwany okres), marża w zł i % (zmiana w p.p.), „brak danych do porównania” zamiast mylącego +100%
 - [x] Wykres przychodu: niepełne okresy na brzegach jaśniejsze, tooltip, tabela z danymi
 - [x] Testy zgodności: 22 przypadki pgTAP + funkcje vs kontrolne SQL na pełnych danych (6 kombinacji filtrów) w CI
-- [ ] Produkcja: migracja, pomiar < 2 s
+- [x] Produkcja: migracja wypchnięta, wartości zgodne z kontrolnym SQL; `/kpi` 0,35–0,68 s po rozgrzaniu (1,9 s przy zimnym starcie po wdrożeniu)
 
 ## Etap 6: Analizy ⏳
 
