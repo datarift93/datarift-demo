@@ -1,13 +1,10 @@
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Suspense } from "react";
 
-const features = [
-  { title: "KPI", text: "Przychód, marża, zamówienia i średni koszyk z porównaniem do poprzedniego okresu." },
-  { title: "Produkty", text: "Ranking, analiza ABC i marża z kosztem zakupu przeliczonym po kursie NBP." },
-  { title: "Klienci", text: "Segmentacja RFM i kohorty retencji." },
-  { title: "Plan vs wykonanie", text: "Realizacja budżetu dla każdego sklepu i miesiąca." },
-  { title: "Anomalie", text: "Automatyczne alerty o nietypowych spadkach sprzedaży i marży." },
-  { title: "Importy", text: "Pipeline z walidacją danych i pełnym logiem importu." },
-];
+import { signInAsDemo } from "@/app/actions/auth";
+import { LandingNotice } from "@/components/auth/landing-notice";
+import { SubmitButton } from "@/components/auth/submit-button";
+import { NAV_ITEMS } from "@/lib/navigation";
 
 export default function Home() {
   return (
@@ -22,19 +19,29 @@ export default function Home() {
           kompletne rozwiązanie BI: od importu i walidacji danych po dashboardy i automatyczne
           wnioski.
         </p>
-        <div>
-          {/* Wired to the one-click demo login in a later stage. */}
-          <Button size="lg" disabled>
-            Zobacz demo (wkrótce)
-          </Button>
+        <Suspense>
+          <LandingNotice />
+        </Suspense>
+        <div className="flex flex-wrap items-center gap-4">
+          <form action={signInAsDemo}>
+            <SubmitButton size="lg" pendingLabel="Otwieram demo…">
+              Zobacz demo
+            </SubmitButton>
+          </form>
+          <p className="text-sm text-muted-foreground">
+            Bez rejestracji, tylko do odczytu.{" "}
+            <Link href="/logowanie" className="underline underline-offset-4">
+              Logowanie administratora
+            </Link>
+          </p>
         </div>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((f) => (
-          <div key={f.title} className="rounded-lg border p-4">
-            <h2 className="font-medium">{f.title}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{f.text}</p>
+        {NAV_ITEMS.map((item) => (
+          <div key={item.href} className="rounded-lg border p-4">
+            <h2 className="font-medium">{item.label}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
           </div>
         ))}
       </section>

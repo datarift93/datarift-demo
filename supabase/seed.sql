@@ -43,3 +43,39 @@ values (
 
 insert into public.org_members (org_id, user_id, role)
 values ('00000000-0000-0000-0000-00000000a001', '00000000-0000-0000-0000-00000000d001', 'demo');
+
+-- Local admin account for testing the admin login (local only, like the demo account).
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-00000000ad01',
+  'authenticated', 'authenticated',
+  'admin@datarift.local',
+  extensions.crypt('admin-local-only', extensions.gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}', '{}',
+  now(), now(),
+  '', '', '', '',
+  '', '', '', ''
+);
+
+insert into auth.identities (
+  id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at
+)
+values (
+  gen_random_uuid(),
+  '00000000-0000-0000-0000-00000000ad01',
+  '00000000-0000-0000-0000-00000000ad01',
+  'email',
+  '{"sub":"00000000-0000-0000-0000-00000000ad01","email":"admin@datarift.local","email_verified":true}',
+  now(), now(), now()
+);
+
+insert into public.org_members (org_id, user_id, role)
+values ('00000000-0000-0000-0000-00000000a001', '00000000-0000-0000-0000-00000000ad01', 'admin');

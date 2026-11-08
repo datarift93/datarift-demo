@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDate, formatInteger, formatPercent, formatPLN } from "./format";
+import {
+  formatDate,
+  formatDateTime,
+  formatDuration,
+  formatInteger,
+  formatPercent,
+  formatPLN,
+} from "./format";
 
 // Intl uses non-breaking spaces; normalize them so expectations stay readable.
 const plain = (s: string) => s.replace(/ /g, " ");
@@ -59,5 +66,28 @@ describe("formatDate", () => {
 
   it("throws on invalid input", () => {
     expect(() => formatDate("not a date")).toThrow(RangeError);
+  });
+});
+
+describe("formatDateTime", () => {
+  it("formats in Warsaw time with a 24-hour clock", () => {
+    expect(formatDateTime("2026-11-08T09:15:00Z")).toBe("08.11.2026, 10:15");
+    expect(formatDateTime("2026-07-01T22:30:00Z")).toBe("02.07.2026, 00:30"); // summer time, next day
+  });
+
+  it("throws on invalid input", () => {
+    expect(() => formatDateTime("nope")).toThrow(RangeError);
+  });
+});
+
+describe("formatDuration", () => {
+  it("uses seconds with a decimal comma under a minute", () => {
+    expect(formatDuration(8.43)).toBe("8,4 s");
+    expect(formatDuration(0.2)).toBe("0,2 s");
+  });
+
+  it("uses minutes and hours above", () => {
+    expect(formatDuration(123.9)).toBe("2 min 4 s");
+    expect(formatDuration(3780)).toBe("1 h 3 min");
   });
 });
