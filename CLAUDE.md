@@ -6,7 +6,7 @@ datarift-demo is a portfolio BI app for prospective data/analytics clients. It a
 
 Full requirements (Polish): [docs/requirements.md](docs/requirements.md). Read it before working on any feature.
 Data contract (CSV files, DB model, planted signals): [docs/data-model.md](docs/data-model.md). Generator and schema must both follow it; change the contract in a PR first.
-Stage plan and progress: [docs/plan.md](docs/plan.md). Check it to see where the project is; tick items in the PR that completes them.
+Stage plan and progress: [docs/plan.md](docs/plan.md). Stage 6 (F2, F3, F6 in parallel sessions): [docs/stage6-spec.md](docs/stage6-spec.md) is the contract, including which files each session may touch. Check it to see where the project is; tick items in the PR that completes them.
 
 ## Stack
 
