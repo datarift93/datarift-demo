@@ -92,7 +92,7 @@ Generator parameters live in `pipeline/config/generator.toml` and are validated 
 
 ## Environments
 
-- **Production web**: https://datarift-demo.vercel.app (Vercel project `datarift-demo`; deploys from `main`).
+- **Production web**: https://datarift-demo.vercel.app (Vercel project `datarift-demo`; deploys from `main`). Functions run in `fra1` (`vercel.json`), next to the database; keep them in the same region.
 - **Production DB**: Supabase project `omxybotjtzmyrankpfio` (eu-central-1), linked with `supabase link`.
   - Migrations: `supabase db push --remote --dry-run` first, then `supabase db push --remote`. `seed.sql` is local only; never push it.
   - Data: `pipeline/.env` holds `DATABASE_URL` (Session pooler, host `aws-1-eu-central-1.pooler.supabase.com`, gitignored, never print it); `uv run datarift-pipeline generate && uv run datarift-pipeline import` loads org `wisla-demo` (~2 min). Re-import is idempotent.

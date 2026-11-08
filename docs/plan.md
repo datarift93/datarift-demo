@@ -32,7 +32,7 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Import pełnych danych demo na produkcję: 693 647 wierszy, 1 287 zaplanowanych błędów, ~2 min, 199 MB z 500 MB
 - Widoki materializowane przeniesione do Etapu 5 (powstaną razem z dashboardem KPI)
 
-## Etap 4: Logowanie i szkielet aplikacji 🔄
+## Etap 4: Logowanie i szkielet aplikacji ✅
 
 - [x] „Zobacz demo” loguje jednym kliknięciem na konto `demo` (hasło tylko na serwerze); logowanie admina e-mail + hasło; wylogowanie
 - [x] Ochrona widoków: `proxy.ts` (szybkie przekierowanie) + sprawdzenie użytkownika w każdym widoku (`lib/auth.ts`)
@@ -40,7 +40,8 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Filtry globalne (okres, kanał, region, kategoria) zapisane w URL, przenoszone między widokami, 14 testów
 - [x] Wspólne komponenty: tabela z sortowaniem, pusty stan, ładowanie, błąd
 - [x] Pierwszy widok z danymi: lista importów i szczegóły z błędami walidacji (część F4)
-- [ ] Produkcja: konto demo i admina, zmienne środowiskowe w Vercel, Site URL i limit logowań w Supabase
+- [x] Produkcja: konto demo i admina (role nadane w bazie), zmienne środowiskowe w Vercel, Site URL i limit logowań w Supabase; demo sprawdzone na https://datarift-demo.vercel.app
+- [x] Funkcje Vercel we Frankfurcie (`fra1`, `vercel.json`), obok bazy (wcześniej `iad1`: każde zapytanie przez Atlantyk)
 
 ## Etap 5: F1 Dashboard KPI ⏳
 
