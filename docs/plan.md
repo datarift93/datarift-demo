@@ -29,7 +29,7 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Idempotentność: ponowny import tych samych plików nie zmienia ani jednego wiersza
 - [x] Komenda `datarift-pipeline import`: pełne dane (~695 tys. wierszy) w ~16 s lokalnie
 - [x] Testy: 37 przypadków pgTAP dla reguł walidacji, pełny import w CI porównany z `_truth.json`
-- [ ] Import pełnych danych demo na produkcję
+- [x] Import pełnych danych demo na produkcję: 693 647 wierszy, 1 287 zaplanowanych błędów, ~2 min, 199 MB z 500 MB
 - Widoki materializowane przeniesione do Etapu 5 (powstaną razem z dashboardem KPI)
 
 ## Etap 4: Logowanie i szkielet aplikacji ⏳
