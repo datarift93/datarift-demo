@@ -52,6 +52,13 @@ pnpm build          # production build
 
 Before finishing a change, run `pnpm lint && pnpm typecheck && pnpm test`. CI runs the same checks plus `pnpm build` on every PR.
 
+App (Stage 4): local dev needs `.env.local` (see `.env.example`; Supabase URL and publishable key from `supabase status`, demo login = the seed account). Local test logins: `demo@datarift.local` (one-click demo) and `admin@datarift.local` / `admin-local-only` (seed only).
+- Data access goes through `lib/auth.ts` (`getCurrentUser`, deduplicated per request) and `lib/data/*` (server-only). **Every query filters by `user.orgId`** on top of RLS (a user may belong to several orgs).
+- Cache Components is on: anything reading cookies, the session or `searchParams` renders inside `<Suspense>`; `lib/supabase/server.ts` calls `connection()` because supabase-js reads `Date.now()`. Run `pnpm build` to catch violations (dev only logs them).
+- The Supabase Data API returns **at most 1000 rows** per request and silently truncates; page with `.range()` (see `getImportRun`) or aggregate in the database.
+- Global filters live in the URL (`lib/filters.ts`, Polish params `od`, `do`, `kanal`, `region`, `kategoria`); in-view links use `FilterLink` so filters survive navigation. Routes are Polish (`lib/navigation.ts`, also the proxy's protected list).
+- One-click demo: server action `signInAsDemo` with `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` (server env only). The demo account is read-only through RLS.
+
 UI: shadcn/ui (Base UI primitives, `components/ui/`), Tailwind v4. Polish number/date formatting lives in `lib/format.ts`; always use it instead of ad-hoc `toLocaleString`. Next.js here is v16: check `node_modules/next/dist/docs/` before using an API (see `AGENTS.md`).
 
 Database (local Supabase, needs Docker running):

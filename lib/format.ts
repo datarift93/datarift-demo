@@ -70,3 +70,33 @@ export function formatDate(value: string | Date): string {
   }
   return dateFormatter.format(value);
 }
+
+const dateTimeFormatter = new Intl.DateTimeFormat("pl-PL", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: TIME_ZONE,
+});
+
+/** Timestamp -> "08.11.2026, 10:15" in Warsaw time. */
+export function formatDateTime(value: string | Date): string {
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) {
+    throw new RangeError(`Invalid date: ${String(value)}`);
+  }
+  return dateTimeFormatter.format(d);
+}
+
+/** Seconds -> "8,4 s", "2 min 4 s", "1 h 3 min". */
+export function formatDuration(seconds: number): string {
+  if (seconds < 60) {
+    return `${new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 1 }).format(seconds)} s`;
+  }
+  const total = Math.round(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return h > 0 ? `${h} h ${m} min` : `${m} min ${s} s`;
+}
