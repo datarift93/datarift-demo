@@ -7,6 +7,7 @@ import {
   formatInteger,
   formatPercent,
   formatPLN,
+  formatPLNCompact,
 } from "./format";
 
 // Intl uses non-breaking spaces; normalize them so expectations stay readable.
@@ -89,5 +90,17 @@ describe("formatDuration", () => {
   it("uses minutes and hours above", () => {
     expect(formatDuration(123.9)).toBe("2 min 4 s");
     expect(formatDuration(3780)).toBe("1 h 3 min");
+  });
+});
+
+describe("formatPLN variants", () => {
+  it("rounds to whole złoty for headline values", () => {
+    expect(plain(formatPLN(98340663.95, { whole: true }))).toBe("98 340 664 zł");
+  });
+
+  it("compacts axis ticks", () => {
+    expect(plain(formatPLNCompact(1_234_567))).toBe("1,2 mln zł");
+    expect(plain(formatPLNCompact(350_000))).toBe("350 tys. zł");
+    expect(plain(formatPLNCompact(0))).toBe("0 zł");
   });
 });

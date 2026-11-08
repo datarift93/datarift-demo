@@ -40,7 +40,7 @@ create function pg_temp.stage(r bigint) returns void language sql as $$
     (r, 2, 'P2', 'Zła', '2025-02-10', '2025-02-01', 'HOME', 'HOME-0001', '2'); -- dates, both, discount
   insert into staging.purchases values
     (r, 1, 'PU1', 'HOME-0001', '2025-01-04', '10', '20.00', 'EUR'),    -- Saturday: rate of 03.01
-    (r, 2, 'PU2', 'HOME-0001', '2024-06-01', '5', '20.00', 'EUR');     -- no NBP rate near the date
+    (r, 2, 'PU2', 'HOME-0001', '2010-06-01', '5', '20.00', 'EUR');     -- no NBP rate near the date (outside real data)
   insert into staging.orders values
     (r, 1, 'O1', 'WAW-01', 'C1', '2025-01-10T12:00:00+01:00'),
     (r, 2, 'O2', 'ONLINE', null, '2025-01-11T10:00:00+01:00'),
@@ -89,7 +89,7 @@ select ok(pg_temp.has_error((select id from runs where n = 1), 'products.csv', 2
 select ok(pg_temp.has_error((select id from runs where n = 1), 'products.csv', 2, 'list_price', 'Cena nie może być ujemna: -5'), 'products: negative price');
 select ok(pg_temp.has_error((select id from runs where n = 1), 'promotions.csv', 2, 'ends_on', 'Data końca jest przed datą początku'), 'promotions: end before start');
 select ok(pg_temp.has_error((select id from runs where n = 1), 'promotions.csv', 2, 'category_code', 'Promocja może dotyczyć kategorii albo produktu, nie obu naraz'), 'promotions: both targets');
-select ok(pg_temp.has_error((select id from runs where n = 1), 'purchases.csv', 2, 'purchase_date', 'Brak kursu NBP EUR z dnia 2024-06-01 ani z 7 dni wcześniej'), 'purchases: no NBP rate');
+select ok(pg_temp.has_error((select id from runs where n = 1), 'purchases.csv', 2, 'purchase_date', 'Brak kursu NBP EUR z dnia 2010-06-01 ani z 7 dni wcześniej'), 'purchases: no NBP rate');
 select ok(pg_temp.has_error((select id from runs where n = 1), 'orders.csv', 3, 'customer_code', 'Nieznany klient: C9'), 'orders: unknown customer');
 select ok(pg_temp.has_error((select id from runs where n = 1), 'orders.csv', 3, 'ordered_at', 'Data 01.01.2023 poza okresem importu (01.01.2025 – 31.12.2025)'), 'orders: out of period');
 select ok(pg_temp.has_error((select id from runs where n = 1), 'orders.csv', 4, 'order_code', 'Duplikat: zamówienie O1 występuje wcześniej w pliku'), 'orders: duplicate');

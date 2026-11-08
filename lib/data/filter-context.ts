@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { getCurrentUser } from "@/lib/auth";
 import type { DataRange, FilterOptions } from "@/lib/filters";
 import { createClient } from "@/lib/supabase/server";
@@ -23,9 +25,10 @@ function localDay(timestamp: string): string {
 /**
  * What the filters can offer for the signed-in user's org: the data period and the
  * regions/categories that exist. Returns null when the org has no orders yet.
- * Reads the session: call inside <Suspense>.
+ * Reads the session: call inside <Suspense>. Deduplicated per request (the filter bar
+ * and the page both need it).
  */
-export async function getFilterContext(): Promise<FilterContext | null> {
+export const getFilterContext = cache(async function getFilterContext(): Promise<FilterContext | null> {
   const [supabase, user] = await Promise.all([createClient(), getCurrentUser()]);
   const org = user.orgId;
   // Both ends use the (org_id, ordered_at) index. RLS already limits rows to the user's
@@ -52,4 +55,4 @@ export async function getFilterContext(): Promise<FilterContext | null> {
       categories: categoryOptions.map((c) => c.code),
     },
   };
-}
+});
