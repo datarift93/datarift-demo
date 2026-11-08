@@ -22,12 +22,15 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] ⫽ Generator + kursy NBP: deterministyczny, ~2 s, ~199 tys. zamówień / ~446 tys. pozycji, 10 zaszytych sygnałów zmierzonych testami, 69 testów: #9
 - [x] Test integracji: wszystkie czyste wiersze ładują się do schematu (157 MB), kalendarze Python i SQL identyczne (kontrola w CI)
 
-## Etap 3: Pipeline importu ⏳
+## Etap 3: Pipeline importu ✅
 
-- [ ] Staging → walidacja (błędy po polsku) → model → log importu
-- [ ] Idempotentność (ponowny import bez duplikatów)
-- [ ] Odświeżanie widoków materializowanych po udanym imporcie
-- [ ] Import pełnych danych demo do lokalnej bazy i na produkcję
+- [x] Staging → walidacja (błędy po polsku) → model → log importu, logika w `private.process_import` (SQL)
+- [x] Kurs NBP dla zakupów w EUR, koszt pozycji = średnia ważona zakupów z 90 dni
+- [x] Idempotentność: ponowny import tych samych plików nie zmienia ani jednego wiersza
+- [x] Komenda `datarift-pipeline import`: pełne dane (~695 tys. wierszy) w ~16 s lokalnie
+- [x] Testy: 37 przypadków pgTAP dla reguł walidacji, pełny import w CI porównany z `_truth.json`
+- [ ] Import pełnych danych demo na produkcję
+- Widoki materializowane przeniesione do Etapu 5 (powstaną razem z dashboardem KPI)
 
 ## Etap 4: Logowanie i szkielet aplikacji ⏳
 

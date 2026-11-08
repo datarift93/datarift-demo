@@ -65,7 +65,7 @@ scripts/check_calendar_parity.sh        # DB calendar == pipeline/calendar_pl.py
 supabase stop
 ```
 
-Every new table: `org_id` column, `enable row level security`, read policy with `private.is_org_member(org_id)`, write policies with `private.is_org_admin(org_id)`, and a pgTAP test (demo can read, cannot write, cannot see other orgs). `001_rls.test.sql` fails if any table in `public` has RLS off. Local demo login: `demo@datarift.local` (seed only).
+Every new table: `org_id` column, `enable row level security`, read policy with `private.is_org_member(org_id)`, write policies with `private.is_org_admin(org_id)`, and a pgTAP test (demo can read, cannot write, cannot see other orgs). `001_rls.test.sql` fails if any table in `public` has RLS off. Exception: `import_runs` / `import_errors` have read policies only; they are written exclusively by `private.process_import` (keep it that way, the F4 audit trail depends on it). Local demo login: `demo@datarift.local` (seed only).
 
 Python pipeline (run from `pipeline/`, uses uv, Python 3.12):
 
@@ -74,9 +74,12 @@ uv sync                                         # install deps into pipeline/.ve
 uv run datarift-pipeline config                 # validate and print config/generator.toml
 uv run datarift-pipeline generate               # full dataset -> pipeline/out/ (CSV + _truth.json), ~2 s
 uv run datarift-pipeline fetch-rates            # refresh data/fx_eur_pln.csv from the NBP API (committed)
+uv run datarift-pipeline import                 # out/ -> database (org wisla-demo); DATABASE_URL from env or pipeline/.env, default local
 uv run pytest                                   # tests in pipeline/tests/
 uv run ruff check . && uv run ruff format --check .
 ```
+
+Import: the loader only COPYs CSVs into the `staging` schema; validation, model upsert, NBP conversion, 90-day line cost and the log are in `private.process_import(run_id)` (migration `*_import_pipeline.sql`). Add a validation rule there plus a case in `supabase/tests/database/004_import.test.sql`. `tests/test_import_db.py` imports the full dataset and checks it against `_truth.json` (runs in the CI database job).
 
 Generator parameters live in `pipeline/config/generator.toml` and are validated by `GeneratorConfig` (pydantic). Generation must stay deterministic: same config + seed = same data.
 

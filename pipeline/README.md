@@ -7,6 +7,7 @@ uv sync
 uv run datarift-pipeline config        # validate and print config/generator.toml
 uv run datarift-pipeline fetch-rates   # refresh data/fx_eur_pln.csv from the NBP API (committed)
 uv run datarift-pipeline generate      # write out/*.csv + out/_truth.json (~2 s)
+uv run datarift-pipeline import        # out/ -> database (local Supabase, or DATABASE_URL from .env)
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
