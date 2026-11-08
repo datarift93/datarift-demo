@@ -138,9 +138,9 @@ Kolumny liczone przy imporcie (żeby agregaty w bazie były proste i szybkie):
 - `order_lines.unit_cost_pln`: średni ważony koszt zakupu produktu z ostatnich 90 dni przed datą zamówienia. Z niego liczy się marżę w F1, F2 i F7.
 - `order_lines.line_revenue`, `order_lines.line_margin` (kolumny generowane)
 
-**Staging (Etap 3):** schemat `staging` (niewystawiony przez API), tabele 1:1 z plikami CSV, wszystkie kolumny jako `text` plus `import_run_id` i `row_no`. Tu wpadają też błędne wiersze, zanim walidacja je odrzuci.
+**Staging:** schemat `staging` (niewystawiony przez API), tabele 1:1 z plikami CSV (także `fx_rates`), wszystkie kolumny jako `text` plus `import_run_id` i `row_no`. Tu wpadają też błędne wiersze, zanim walidacja je odrzuci. Po imporcie wiersze stagingu są usuwane (limit darmowego planu), a odrzucone zostają opisane w `import_errors`.
 
-**Log importu (Etap 3):** `import_runs` (status, czasy, liczby wierszy), `import_errors` (plik, nr wiersza, pole, opis po polsku).
+**Log importu:** `import_runs` (status, okres importu, czasy, liczby wierszy), `import_errors` (plik, nr wiersza, pole, opis po polsku). Zamówienia spoza okresu importu (`period_start`..`period_end`, z konfiguracji generatora) są odrzucane.
 
 **Indeksy pod filtry:** `order_lines(org_id, order_id)`, `orders(org_id, ordered_at)`, `orders(org_id, store_id, ordered_at)`, `products(org_id, category_id)`.
 

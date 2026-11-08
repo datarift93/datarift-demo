@@ -5,7 +5,8 @@
 -- log in as demo, and RLS keeps the account read-only.
 
 insert into public.orgs (id, slug, name)
-values ('00000000-0000-0000-0000-00000000a001', 'wisla-demo', 'Wisła (demo)');
+values ('00000000-0000-0000-0000-00000000a001', 'wisla-demo', 'Wisła (demo)')
+on conflict (id) do nothing; -- also created by the import_pipeline migration
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,

@@ -42,6 +42,15 @@ def main(argv: list[str] | None = None) -> int:
     gen.add_argument("--rates", type=Path, default=nbp.DEFAULT_RATES_PATH)
     gen.add_argument("--out", type=Path, default=Path("out"))
 
+    imp = sub.add_parser("import", help="import generated CSVs into the database")
+    imp.add_argument("--path", type=Path, default=None, help="config file (TOML)")
+    imp.add_argument("--data", type=Path, default=Path("out"), help="directory with the CSVs")
+    imp.add_argument("--rates", type=Path, default=nbp.DEFAULT_RATES_PATH)
+    imp.add_argument("--org", default="wisla-demo", help="target organization slug")
+    imp.add_argument(
+        "--database-url", default=None, help="default: $DATABASE_URL, then local Supabase"
+    )
+
     args = parser.parse_args(argv)
     config = _load(args.path)
     if config is None:
@@ -72,6 +81,27 @@ def main(argv: list[str] | None = None) -> int:
         for name, count in counts.items():
             print(f"{name:<20} {count:>9,}")
         print(f"generated in {elapsed:.1f} s -> {args.out}")
+
+    elif args.command == "import":
+        from datarift_pipeline import importer  # psycopg import only when needed
+
+        url = importer.database_url(args.database_url)
+        try:
+            # The period the data was generated for wins over the current config file.
+            start, end = importer.dataset_period(args.data) or (config.start_date, config.end_date)
+            source = f"{args.data.name}/ ({start}..{end})"
+            result = importer.run_import(args.data, args.rates, args.org, start, end, source, url)
+        except importer.ImportFailed as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 2
+        print(f"import run {result.run_id}: {result.status} in {result.seconds:.1f} s")
+        print(
+            f"rows read {result.rows_read:,}, valid {result.rows_valid:,}, "
+            f"rejected {result.rows_rejected:,}"
+        )
+        for name, count in result.rejected_by_file.items():
+            print(f"  rejected in {name:<18} {count:>7,}")
+        return 0 if result.status in ("success", "partial") else 1
     return 0
 
 
