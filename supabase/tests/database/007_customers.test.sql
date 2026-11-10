@@ -3,10 +3,10 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(27);
 
 -- Fixture -----------------------------------------------------------------------
--- Org C: one physical store (region 14) + online, six customers, all dates in 2022-2023
+-- Org C: one physical store (region 14) + online, seven customers, all dates in 2022-2023
 -- (before the real dataset). Every order has one line of quantity 1, so revenue = price.
 --
 --   code region orders (Warsaw day, channel, PLN)                    p_to = 2023-12-31
@@ -17,17 +17,21 @@ select plan(26);
 --   C4   12     2022-06-01 O 80 (outside the window)
 --   C5   14     2023-09-15 S 70, 2023-09-20 S 70
 --   C6   12     2023-09-01 S 30, 2023-11-05 O 30
+--   C7   14     2022-11-26 S 40 (400 days before p_to), 2023-12-28 S 40: returning, not new
 --   + one anonymous store order (no customer) on 2023-12-10.
 --
--- At p_to = 2023-12-31 (window 2023-01-01..2023-12-31):
---   code  R days  F  M    R score  F score  M score  segment
---   C1    11      4  400  4        5        4        Mistrzowie
---   C2    1       1  50   5        1        1        Nowi (R >= 4, one order)
---   C3    244     3  600  1        4        5        Lojalni (F >= 4)
---   C4    578     0  0    1        1        1        Utraceni
---   C5    102     2  140  2        2        3        Zagrożeni odejściem
---   C6    56      2  60   3        3        2        Obiecujący
--- (ntile(5) over 6 customers: the lowest band gets 2; ties by customer_code.)
+-- At p_to = 2023-12-31 (window 2023-01-01..2023-12-31; ntile(5) over 7 customers gives
+-- bands of 2, 2, 1, 1, 1; ties by customer_code):
+--   code  R days  F  M    all orders  R  F  M  segment
+--   C1    11      4  400  4           3  5  4  Lojalni (F >= 4; R 3, so not Mistrzowie)
+--   C2    1       1  50   1           5  1  2  Nowi (R >= 4, first and only order)
+--   C3    244     3  600  4           1  4  5  Lojalni
+--   C4    578     0  0    1           1  1  1  Utraceni
+--   C5    102     2  140  2           2  2  3  Zagrożeni odejściem
+--   C6    56      2  60   2           2  3  2  Zagrożeni odejściem
+--   C7    3       1  40   2           4  2  1  Obiecujący (R >= 4 but 2 orders in history)
+-- Store channel only (C1, C3, C5, C6, C7: one per band): C1 R4 F4 Mistrzowie, C3 Lojalni,
+-- C7 R5 with 2 store orders -> Obiecujący, C5 Obiecujący, C6 Zagrożeni odejściem.
 insert into public.orgs (id, slug, name) values
   ('70000000-0000-0000-0000-00000000000a', 'customers-test', 'Customers test'),
   ('70000000-0000-0000-0000-00000000000b', 'customers-other', 'Customers other');
@@ -72,6 +76,8 @@ begin
       ('C5', '14', '2023-09-20T12:00:00+02:00', 'S', 70),
       ('C6', '12', '2023-09-01T12:00:00+02:00', 'S', 30),
       ('C6', '12', '2023-11-05T12:00:00+01:00', 'O', 30),
+      ('C7', '14', '2022-11-26T12:00:00+01:00', 'S', 40),
+      ('C7', '14', '2023-12-28T12:00:00+01:00', 'S', 40),
       (null, null, '2023-12-10T12:00:00+01:00', 'S', 999)
     ) as t (code, region, at, channel, price)
   loop
@@ -107,19 +113,19 @@ select pg_temp.login_as('70000000-0000-0000-0000-0000000000a1');
 
 -- RFM segments ------------------------------------------------------------------
 select results_eq(
-  $$ select segment, customers, revenue, avg_recency_days, avg_frequency, share_revenue
+  $$ select segment, customers, revenue, avg_recency_days, avg_frequency, round(share_revenue, 4)
      from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2023-12-31') $$,
-  $$ values ('Mistrzowie'::text,         1::bigint, 400::numeric, 11::numeric,  4::numeric, 0.32::numeric),
-            ('Lojalni',                   1, 600, 244, 3, 0.48),
-            ('Nowi',                      1,  50,   1, 1, 0.04),
-            ('Obiecujący',                1,  60,  56, 2, 0.048),
-            ('Zagrożeni odejściem',       1, 140, 102, 2, 0.112),
-            ('Utraceni',                  1,   0, 578, 0, 0) $$,
-  'six segments in rule order; revenue = window revenue; anonymous and post-p_to orders excluded');
+  $$ values ('Mistrzowie'::text,         0::bigint,    0::numeric, null::numeric, null::numeric, 0::numeric),
+            ('Lojalni',                   2, 1000, 127.5, 3.5, 0.7752),
+            ('Nowi',                      1,   50,     1,   1, 0.0388),
+            ('Obiecujący',                1,   40,     3,   1, 0.0310),
+            ('Zagrożeni odejściem',       2,  200,    79,   2, 0.1550),
+            ('Utraceni',                  1,    0,   578,   0, 0) $$,
+  'six segments in rule order (empty one included); revenue = window revenue; anonymous and post-p_to orders excluded');
 
 select is(
   (select array_agg(round(share_customers, 4)) from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2023-12-31')),
-  array[0.1667, 0.1667, 0.1667, 0.1667, 0.1667, 0.1667]::numeric[],
+  array[0, 0.2857, 0.1429, 0.1429, 0.2857, 0.1429]::numeric[],
   'customer shares');
 
 select results_eq(
@@ -128,8 +134,8 @@ select results_eq(
      where score in (1, 5) $$,
   $$ values ('R'::text, 1, 2::bigint, 244::numeric, 578::numeric), ('R', 5, 1, 1, 1),
             ('F', 1, 2, 0, 1), ('F', 5, 1, 4, 4),
-            ('M', 1, 2, 0, 50), ('M', 5, 1, 600, 600) $$,
-  'score bands: R by recency (most recent = 5), F and M descending; lowest band holds 2 of 6');
+            ('M', 1, 2, 0, 40), ('M', 5, 1, 600, 600) $$,
+  'score bands: R by recency (most recent = 5), F and M descending; lowest bands hold 2 of 7');
 
 select is(
   (select count(*)::int from public.customer_rfm_scores('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2023-12-31')),
@@ -139,6 +145,11 @@ select results_eq(
   $$ select customers from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2023-12-31', 'online') $$,
   $$ values (0::bigint), (1), (1), (1), (0), (1) $$,
   'channel online: only online orders (C4 Utraceni, C6 Lojalni, C2 Nowi, C1 Obiecujący)');
+
+select results_eq(
+  $$ select customers from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2023-12-31', 'store') $$,
+  $$ values (1::bigint), (1), (0), (2), (1), (0) $$,
+  'returning customer: C7 is the most recent store buyer with 1 order in the window but 2 in history -> not Nowi');
 
 select results_eq(
   $$ select customers from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2023-12-31', null, '12') $$,
@@ -152,11 +163,11 @@ select results_eq(
 
 select is(
   (select sum(customers)::int from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2023-12-31', null, null, 'XYZ')),
-  6, 'category filter is ignored');
+  7, 'category filter is ignored');
 
 select is(
   (select sum(customers)::int from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-12-01', '2023-12-31')),
-  6, 'p_from does not limit customers: RFM is as of p_to over all history');
+  7, 'p_from does not limit customers: RFM is as of p_to over all history');
 
 select results_eq(
   $$ select avg_recency_days, avg_frequency, revenue from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2023-01-01', '2024-01-01')
@@ -166,7 +177,7 @@ select results_eq(
 
 select is(
   (select sum(customers)::int from public.customer_rfm_segments('70000000-0000-0000-0000-00000000000a', '2022-01-01', '2022-12-31')),
-  2, 'only customers with an order on or before p_to (C3, C4)');
+  3, 'only customers with an order on or before p_to (C3, C4, C7)');
 
 -- Cohorts -------------------------------------------------------------------------
 -- Data ends 2024-01-01 (local) -> last full month = 2023-12.

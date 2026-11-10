@@ -43,7 +43,7 @@ export type CohortCell = {
 export const SEGMENT_INFO: Record<SegmentName, { rule: string; description: string }> = {
   Mistrzowie: { rule: "R ≥ 4 i F ≥ 4", description: "Kupują często i niedawno. Najcenniejsza grupa." },
   Lojalni: { rule: "F ≥ 4", description: "Kupują często, ale ostatni zakup był dawniej." },
-  Nowi: { rule: "R ≥ 4 i 1 zamówienie w 12 mies.", description: "Niedawny pierwszy (jedyny) zakup w ostatnim roku." },
+  Nowi: { rule: "R ≥ 4 i 1 zamówienie", description: "Niedawno kupili po raz pierwszy (jedno zamówienie w historii)." },
   Obiecujący: { rule: "R ≥ 3", description: "Kupowali niedawno, jeszcze nie często." },
   "Zagrożeni odejściem": { rule: "R = 2", description: "Długo bez zakupu. Warto ich odzyskać." },
   Utraceni: { rule: "R = 1", description: "Najdłużej bez zakupu: 20% klientów z najstarszym ostatnim zakupem." },

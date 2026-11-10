@@ -91,6 +91,7 @@ as $$
     select d.customer_id,
            c.customer_code,
            p_to - max(d.day)                                                        as recency_days,
+           sum(d.orders)::bigint                                                    as total_orders,
            coalesce(sum(d.orders) filter (where d.day > p_to - 365), 0)::bigint     as frequency,
            coalesce(sum(d.revenue) filter (where d.day > p_to - 365), 0)            as monetary
     from analytics.customer_day d
@@ -113,13 +114,15 @@ as $$
   select s.customer_id, s.recency_days, s.frequency, s.monetary, s.r_score, s.f_score, s.m_score,
          -- First matching rule (docs/stage6-spec.md, F3). R is always 1-5, so every
          -- customer gets exactly one segment.
-         -- "Nowi" deviates from the spec's "F score <= 1": with > 20% of customers having
-         -- no order in the window, F score 1 holds only F = 0, which can never meet R >= 4,
-         -- so the segment was always empty. Here: recent AND exactly one order in the window.
+         -- "Nowi" deviates from the spec's "F score <= 1" (agreed with the Stage 6
+         -- coordinator): with > 20% of customers having no order in the window, F score 1
+         -- holds only F = 0, which can never meet R >= 4, so the segment was always empty.
+         -- Here: recent AND exactly one order in the whole history up to p_to (first-time
+         -- buyers; a returning customer with one recent order after a gap is not "new").
          case
-           when s.r_score >= 4 and s.f_score >= 4 then 1  -- Mistrzowie
-           when s.f_score >= 4                    then 2  -- Lojalni
-           when s.r_score >= 4 and s.frequency = 1 then 3 -- Nowi
+           when s.r_score >= 4 and s.f_score >= 4    then 1  -- Mistrzowie
+           when s.f_score >= 4                       then 2  -- Lojalni
+           when s.r_score >= 4 and s.total_orders = 1 then 3 -- Nowi
            when s.r_score >= 3                    then 4  -- Obiecujący
            when s.r_score = 2                     then 5  -- Zagrożeni odejściem
            else                                        6  -- Utraceni (R = 1)

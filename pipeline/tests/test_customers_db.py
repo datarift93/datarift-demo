@@ -84,10 +84,10 @@ def _as_member(conn: psycopg.Connection, user_id) -> None:
 # model tables (no analytics view). Category is deliberately not a parameter: F3 ignores it.
 CUSTOMER_ORDERS = """
     select o.customer_id, c.customer_code, o.id as order_id,
-           (o.ordered_at at time zone 'Europe/Warsaw')::date as day,
-           (select sum(l.line_revenue) from public.order_lines l
-            where l.org_id = o.org_id and l.order_id = o.id) as revenue
+           (o.ordered_at at time zone 'Europe/Warsaw')::date as day, rev.revenue
     from public.orders o
+    join (select l.order_id, sum(l.line_revenue) as revenue from public.order_lines l
+          where l.org_id = %(org)s group by l.order_id) rev on rev.order_id = o.id
     join public.customers c on c.id = o.customer_id
     join public.stores s on s.id = o.store_id
     left join public.regions r on r.id = c.region_id
@@ -102,6 +102,7 @@ CONTROL_SEGMENTS = f"""
     per_customer as (
       select customer_id, customer_code,
              %(to)s::date - max(day) as recency,
+             count(*) as total,
              count(*) filter (where day between %(to)s::date - 364 and %(to)s::date) as f,
              coalesce(sum(revenue) filter (
                where day between %(to)s::date - 364 and %(to)s::date), 0) as m
@@ -117,7 +118,7 @@ CONTROL_SEGMENTS = f"""
       select *, case
         when r_s >= 4 and f_s >= 4 then 'Mistrzowie'
         when f_s >= 4 then 'Lojalni'
-        when r_s >= 4 and f = 1 then 'Nowi'
+        when r_s >= 4 and total = 1 then 'Nowi'
         when r_s >= 3 then 'Obiecujący'
         when r_s = 2 then 'Zagrożeni odejściem'
         else 'Utraceni' end as segment
@@ -202,6 +203,7 @@ def test_lost_segment_not_empty_for_full_period(member):
         )
     got = {r[0]: r[1] for r in rows}
     assert got["Utraceni"] > 0
+    assert got["Nowi"] > 0, "first-time buyers exist (the spec's literal rule made this empty)"
     assert all(got[s] > 0 for s in SEGMENTS), got
 
 
