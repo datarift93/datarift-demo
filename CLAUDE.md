@@ -96,6 +96,7 @@ Generator parameters live in `pipeline/config/generator.toml` and are validated 
 - **Production web**: https://datarift-demo.vercel.app (Vercel project `datarift-demo`; deploys from `main`). Functions run in `fra1` (`vercel.json`), next to the database; keep them in the same region.
 - **Production DB**: Supabase project `omxybotjtzmyrankpfio` (eu-central-1), linked with `supabase link`.
   - Migrations: `supabase db push --remote --dry-run` first, then `supabase db push --remote`. `seed.sql` is local only; never push it.
+  - **Push a migration before merging the code that calls it**: merging deploys to Vercel at once, and until the migration lands the new views show the error state (happened for ~30 min in Stage 6).
   - Data: `pipeline/.env` holds `DATABASE_URL` (Session pooler, host `aws-1-eu-central-1.pooler.supabase.com`, gitignored, never print it); `uv run datarift-pipeline generate && uv run datarift-pipeline import` loads org `wisla-demo` (~2 min). Re-import is idempotent.
   - Do **not** run `supabase config push`: `config.toml` holds local dev auth settings (no email confirmation, no MFA, localhost URLs). Change production auth settings in the dashboard.
 

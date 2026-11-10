@@ -52,7 +52,7 @@ Kolejność budowy MVP z [requirements.md](requirements.md). Każdy etap kończy
 - [x] Testy zgodności: 22 przypadki pgTAP + funkcje vs kontrolne SQL na pełnych danych (6 kombinacji filtrów) w CI
 - [x] Produkcja: migracja wypchnięta, wartości zgodne z kontrolnym SQL; `/kpi` 0,35–0,68 s po rozgrzaniu (1,9 s przy zimnym starcie po wdrożeniu)
 
-## Etap 6: Analizy 🔄
+## Etap 6: Analizy ✅
 
 Trzy równoległe sesje według [stage6-spec.md](stage6-spec.md), potem test integracji wszystkich trzech na czystej bazie (334 testy pgTAP, 131 testów pipeline'u, build) i sprawdzenie w przeglądarce.
 
@@ -60,7 +60,7 @@ Trzy równoległe sesje według [stage6-spec.md](stage6-spec.md), potem test int
 - [x] ⫽ **F3 Klienci**: 6 segmentów RFM (okno 365 dni), kohorty retencji jako heatmapa: #21
 - [x] ⫽ **F6 Plan vs wykonanie**: pełne miesiące, sieć/region/sklep, tabela sklep × miesiąc z kolorem i ikoną statusu: #19
 - [x] Integracja: wspólna lista odświeżanych widoków (równoległe migracje nadpisywały ją nawzajem) + test-strażnik `009`
-- [ ] Produkcja: migracje, odświeżenie, pomiar < 2 s
+- [x] Produkcja: 4 migracje, widoki identyczne z lokalnymi (produkty 312 tys., klienci 76 tys. wierszy), baza 276 MB z 500 MB; po rozgrzaniu: Produkty 0,67 s (pełne 2 lata 1,5 s), Klienci 0,9 s, Plan 0,4 s
 
 ## Etap 7: F7 Anomalie ⏳
 
