@@ -1,6 +1,6 @@
 # Etap 6: specyfikacja (F2 Produkty, F3 Klienci, F6 Plan vs wykonanie)
 
-Wersja 1.0, 2026-11-08. Ten dokument jest **kontraktem dla trzech równoległych sesji**: każda buduje jeden widok, opierając się na tym, co tu ustalono. Wymagania biznesowe: [requirements.md](requirements.md) (F2, F3, F6). Wzorzec techniczny: Etap 5 (F1 KPI).
+Wersja 1.1, 2026-11-10 (1.1: reguła „Nowi”; wspólna lista odświeżania widoków w migracji integracyjnej). Ten dokument jest **kontraktem dla trzech równoległych sesji**: każda buduje jeden widok, opierając się na tym, co tu ustalono. Wymagania biznesowe: [requirements.md](requirements.md) (F2, F3, F6). Wzorzec techniczny: Etap 5 (F1 KPI).
 
 ---
 
@@ -77,7 +77,7 @@ Tylko klienci zidentyfikowani (`orders.customer_id is not null`); zakupy anonimo
 - Segmenty (pierwsza pasująca reguła):
   1. **Mistrzowie**: R ≥ 4 i F ≥ 4
   2. **Lojalni**: F ≥ 4
-  3. **Nowi**: R ≥ 4 i F ≤ 1 *(F jako ocena)*
+  3. **Nowi**: R ≥ 4 i dokładnie 1 zamówienie w całej historii do `p_to` (świeży pierwszy zakup). *Poprawka 1.1: pierwotna reguła „F ≤ 1 jako ocena” była zawsze pusta, bo ocenę 1 dostają klienci bez zamówień w oknie; wykryła to sesja F3.*
   4. **Obiecujący**: R ≥ 3
   5. **Zagrożeni odejściem**: R = 2
   6. **Utraceni**: R = 1
